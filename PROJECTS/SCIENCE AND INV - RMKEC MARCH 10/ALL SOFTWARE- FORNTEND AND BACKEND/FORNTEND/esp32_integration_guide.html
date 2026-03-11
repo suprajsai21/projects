@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirMind — ESP32 Integration Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#050a0e;--bg2:#091318;--bg3:#0d1e26;--bg4:#112530;--accent:#00e5ff;--accent2:#00ff9d;--accent3:#ff6b35;--accent4:#a855f7;--warn:#ffd60a;--text:#e0f4ff;--text2:#7ab3c8;--text3:#3d6978;--border:rgba(0,229,255,0.1)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;padding:40px 32px;max-width:1100px;margin:0 auto}
+  h1{font-size:32px;font-weight:800;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:12px}
+  .subtitle{color:var(--text2);font-family:'Space Mono',monospace;font-size:13px;margin-bottom:40px}
+  .flow-diagram{display:flex;align-items:center;justify-content:center;gap:0;margin:40px 0;flex-wrap:wrap}
+  .flow-box{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:20px 24px;text-align:center;min-width:140px}
+  .flow-box.esp{border-color:rgba(255,107,53,0.4);background:rgba(255,107,53,0.06)}
+  .flow-box.py{border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.06)}
+  .flow-box.web{border-color:rgba(0,229,255,0.4);background:rgba(0,229,255,0.06)}
+  .flow-icon{font-size:32px;margin-bottom:8px}
+  .flow-name{font-size:13px;font-weight:700;margin-bottom:4px}
+  .flow-desc{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;letter-spacing:1px}
+  .flow-arrow{font-size:28px;color:var(--text3);padding:0 12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .flow-arrow-label{font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;letter-spacing:1px;text-align:center}
+  .section{margin-bottom:40px}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .step-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+  .s1{background:rgba(255,107,53,0.2);color:var(--accent3);border:1px solid rgba(255,107,53,0.4)}
+  .s2{background:rgba(168,85,247,0.2);color:var(--accent4);border:1px solid rgba(168,85,247,0.4)}
+  .s3{background:rgba(0,229,255,0.15);color:var(--accent);border:1px solid rgba(0,229,255,0.3)}
+  .s4{background:rgba(0,255,157,0.15);color:var(--accent2);border:1px solid rgba(0,255,157,0.3)}
+  .section-title{font-size:18px;font-weight:700}
+  .section-sub{font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:2px}
+  pre{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;overflow-x:auto;font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;color:var(--text2);margin-bottom:16px;position:relative}
+  .lang-tag{position:absolute;top:10px;right:14px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:'Space Mono',monospace}
+  .c-kw{color:#ff6b35}
+  .c-fn{color:#00e5ff}
+  .c-str{color:#00ff9d}
+  .c-cm{color:#3d6978}
+  .c-num{color:#ffd60a}
+  .c-var{color:#a855f7}
+  .tip{background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 18px;margin-bottom:16px;font-size:13px;color:var(--text2)}
+  .tip strong{color:var(--accent)}
+  .warn-box{background:rgba(255,214,10,0.05);border:1px solid rgba(255,214,10,0.2);border-left:3px solid var(--warn);border-radius:0 12px 12px 0;padding:14px 18px;margin-bottom:16px;font-size:13px;color:var(--text2)}
+  .warn-box strong{color:var(--warn)}
+  .tag-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .tag{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:1px}
+  .tag-esp{background:rgba(255,107,53,0.15);color:var(--accent3);border:1px solid rgba(255,107,53,0.3)}
+  .tag-py{background:rgba(168,85,247,0.15);color:var(--accent4);border:1px solid rgba(168,85,247,0.3)}
+  .tag-html{background:rgba(0,229,255,0.12);color:var(--accent);border:1px solid rgba(0,229,255,0.25)}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+  th{text-align:left;padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text3);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+  td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text2);font-family:'Space Mono',monospace}
+  td:first-child{color:var(--accent);font-weight:700}
+  .ok{color:var(--accent2)}
+  .check{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px;color:var(--text2)}
+  .check::before{content:'✓';color:var(--accent2);font-weight:700;flex-shrink:0;margin-top:1px}
+</style>
+</head>
+<body>
+
+<h1>🌬 AirMind — ESP32 Integration Guide</h1>
+<div class="subtitle">HOW TO SEND REAL SENSOR DATA FROM ESP32 → PYTHON → WEBSITE/APP</div>
+
+<!-- FLOW DIAGRAM -->
+<div class="flow-diagram">
+  <div class="flow-box esp">
+    <div class="flow-icon">🔌</div>
+    <div class="flow-name">ESP32</div>
+    <div class="flow-desc">READS SENSORS<br>EVERY 2s</div>
+  </div>
+  <div class="flow-arrow">
+    <span>→</span>
+    <div class="flow-arrow-label">Wi-Fi<br>HTTP POST<br>JSON</div>
+  </div>
+  <div class="flow-box py">
+    <div class="flow-icon">🐍</div>
+    <div class="flow-name">Python Flask</div>
+    <div class="flow-desc">RECEIVES DATA<br>RUNS AI/ML</div>
+  </div>
+  <div class="flow-arrow">
+    <span>→</span>
+    <div class="flow-arrow-label">HTTP GET<br>/live<br>/predict</div>
+  </div>
+  <div class="flow-box web">
+    <div class="flow-icon">🖥️</div>
+    <div class="flow-name">Dashboard</div>
+    <div class="flow-desc">FETCHES EVERY<br>3 SECONDS</div>
+  </div>
+</div>
+
+<!-- STEP 1: ESP32 -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num s1">1</div>
+    <div>
+      <div class="section-title">ESP32 Firmware — Send JSON over Wi-Fi</div>
+      <div class="section-sub">ADD THIS TO YOUR EXISTING ESP32 CODE</div>
+    </div>
+  </div>
+  <div class="tag-row"><span class="tag tag-esp">Arduino / ESP32</span><span class="tag tag-esp">WiFi.h</span><span class="tag tag-esp">HTTPClient.h</span></div>
+
+  <div class="tip"><strong>How it works:</strong> Your ESP32 connects to Wi-Fi and after every sensor reading, it sends a JSON POST request to your laptop's Flask server. Your laptop and ESP32 must be on the <strong>same Wi-Fi network</strong>.</div>
+
+  <pre><span class="lang-tag">C++ / Arduino</span><span class="c-cm">// ─── ADD THESE INCLUDES AT THE TOP OF YOUR FIRMWARE ───────────</span>
+<span class="c-kw">#include</span> <span class="c-str">&lt;WiFi.h&gt;</span>
+<span class="c-kw">#include</span> <span class="c-str">&lt;HTTPClient.h&gt;</span>
+<span class="c-kw">#include</span> <span class="c-str">&lt;ArduinoJson.h&gt;</span>   <span class="c-cm">// Install from Library Manager</span>
+
+<span class="c-cm">// ─── YOUR WI-FI CREDENTIALS ────────────────────────────────────</span>
+<span class="c-kw">const char</span>* ssid     = <span class="c-str">"YOUR_WIFI_NAME"</span>;
+<span class="c-kw">const char</span>* password = <span class="c-str">"YOUR_WIFI_PASSWORD"</span>;
+
+<span class="c-cm">// ─── YOUR LAPTOP'S IP ON THE SAME WI-FI ────────────────────────</span>
+<span class="c-cm">// Find it: Windows → ipconfig | Mac/Linux → ifconfig</span>
+<span class="c-kw">const char</span>* serverUrl = <span class="c-str">"http://192.168.1.5:5001/data"</span>;
+<span class="c-cm">//                              ↑ CHANGE THIS TO YOUR LAPTOP IP</span>
+
+<span class="c-cm">// ─── CONNECT TO WI-FI IN setup() ───────────────────────────────</span>
+<span class="c-fn">void</span> <span class="c-fn">setup</span>() {
+  Serial.<span class="c-fn">begin</span>(<span class="c-num">115200</span>);
+  WiFi.<span class="c-fn">begin</span>(ssid, password);
+  Serial.<span class="c-fn">print</span>(<span class="c-str">"Connecting to WiFi"</span>);
+  <span class="c-kw">while</span> (WiFi.<span class="c-fn">status</span>() != WL_CONNECTED) {
+    <span class="c-fn">delay</span>(<span class="c-num">500</span>);
+    Serial.<span class="c-fn">print</span>(<span class="c-str">"."</span>);
+  }
+  Serial.<span class="c-fn">println</span>(<span class="c-str">"\nConnected! IP: "</span> + WiFi.<span class="c-fn">localIP</span>().<span class="c-fn">toString</span>());
+  <span class="c-cm">// ... rest of your setup code</span>
+}
+
+<span class="c-cm">// ─── SEND SENSOR DATA FUNCTION ─────────────────────────────────</span>
+<span class="c-fn">void</span> <span class="c-fn">sendDataToServer</span>() {
+  <span class="c-kw">if</span> (WiFi.<span class="c-fn">status</span>() != WL_CONNECTED) <span class="c-kw">return</span>;
+
+  HTTPClient http;
+  http.<span class="c-fn">begin</span>(serverUrl);
+  http.<span class="c-fn">addHeader</span>(<span class="c-str">"Content-Type"</span>, <span class="c-str">"application/json"</span>);
+
+  <span class="c-cm">// Build JSON with your sensor variables</span>
+  StaticJsonDocument&lt;<span class="c-num">512</span>&gt; doc;
+  doc[<span class="c-str">"aqi"</span>]        = aqiValue;        <span class="c-cm">// your existing variable</span>
+  doc[<span class="c-str">"co2"</span>]        = co2Value;
+  doc[<span class="c-str">"temp"</span>]       = temperature;
+  doc[<span class="c-str">"humidity"</span>]   = humidity;
+  doc[<span class="c-str">"nh3"</span>]        = nh3Value;
+  doc[<span class="c-str">"benzene"</span>]    = benzeneValue;
+  doc[<span class="c-str">"co"</span>]         = coValue;
+  doc[<span class="c-str">"voltage"</span>]    = busVoltage;
+  doc[<span class="c-str">"current"</span>]    = currentMA;
+  doc[<span class="c-str">"power"</span>]      = powerW;
+  doc[<span class="c-str">"energy"</span>]     = energyKWh;
+  doc[<span class="c-str">"cost"</span>]       = costValue;
+  doc[<span class="c-str">"occupancy"</span>]  = occupancyState;  <span class="c-cm">// 0 or 1</span>
+  doc[<span class="c-str">"airCtrl"</span>]    = airCtrlState;    <span class="c-cm">// 0 or 1</span>
+  doc[<span class="c-str">"mode"</span>]       = modeString;      <span class="c-cm">// "AUTO" or "MANUAL"</span>
+
+  String jsonBody;
+  <span class="c-fn">serializeJson</span>(doc, jsonBody);
+
+  <span class="c-kw">int</span> httpCode = http.<span class="c-fn">POST</span>(jsonBody);
+  http.<span class="c-fn">end</span>();
+}
+
+<span class="c-cm">// ─── CALL IT IN YOUR MAIN loop() ───────────────────────────────</span>
+<span class="c-fn">void</span> <span class="c-fn">loop</span>() {
+  <span class="c-cm">// ... your existing sensor reading code ...</span>
+  
+  <span class="c-cm">// After reading sensors, send to server</span>
+  <span class="c-fn">sendDataToServer</span>();   <span class="c-cm">// add this line</span>
+  
+  <span class="c-fn">delay</span>(<span class="c-num">2000</span>);           <span class="c-cm">// 2 second loop</span>
+}</pre>
+
+  <div class="warn-box"><strong>⚠️ Find your laptop IP:</strong> Open Command Prompt → type <code style="color:var(--warn)">ipconfig</code> → look for <strong>IPv4 Address</strong> under your Wi-Fi adapter (e.g. 192.168.1.5). Use that in the ESP32 code above.</div>
+</div>
+
+<!-- STEP 2: PYTHON FLASK RECEIVER -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num s2">2</div>
+    <div>
+      <div class="section-title">Python — Live Data Server (ai_api.py upgrade)</div>
+      <div class="section-sub">REPLACE OR EXTEND YOUR EXISTING ai_api.py WITH THIS</div>
+    </div>
+  </div>
+  <div class="tag-row"><span class="tag tag-py">Python</span><span class="tag tag-py">Flask</span><span class="tag tag-py">Port 5001</span></div>
+
+  <div class="tip"><strong>This file does 3 things:</strong> (1) Receives JSON from ESP32 at <code>/data</code>, (2) Serves live data to the website at <code>/live</code>, (3) Runs AI predictions at <code>/predict</code>.</div>
+
+  <pre><span class="lang-tag">Python</span><span class="c-cm"># live_server.py — Run this on your laptop</span>
+<span class="c-cm"># Start with: python live_server.py</span>
+
+<span class="c-kw">from</span> flask <span class="c-kw">import</span> Flask, request, jsonify
+<span class="c-kw">from</span> flask_cors <span class="c-kw">import</span> CORS
+<span class="c-kw">import</span> joblib
+<span class="c-kw">import</span> numpy <span class="c-kw">as</span> np
+<span class="c-kw">from</span> datetime <span class="c-kw">import</span> datetime
+
+app = Flask(__name__)
+CORS(app)  <span class="c-cm"># Allow website/app to fetch data</span>
+
+<span class="c-cm"># ─── LATEST DATA STORAGE (in memory) ───────────────────────────</span>
+latest_data = {
+    <span class="c-str">"aqi"</span>: <span class="c-num">0</span>, <span class="c-str">"co2"</span>: <span class="c-num">400</span>, <span class="c-str">"temp"</span>: <span class="c-num">25</span>, <span class="c-str">"humidity"</span>: <span class="c-num">50</span>,
+    <span class="c-str">"nh3"</span>: <span class="c-num">0</span>, <span class="c-str">"benzene"</span>: <span class="c-num">0</span>, <span class="c-str">"co"</span>: <span class="c-num">0</span>,
+    <span class="c-str">"voltage"</span>: <span class="c-num">0</span>, <span class="c-str">"current"</span>: <span class="c-num">0</span>, <span class="c-str">"power"</span>: <span class="c-num">0</span>,
+    <span class="c-str">"energy"</span>: <span class="c-num">0</span>, <span class="c-str">"cost"</span>: <span class="c-num">0</span>,
+    <span class="c-str">"occupancy"</span>: <span class="c-num">0</span>, <span class="c-str">"airCtrl"</span>: <span class="c-num">0</span>, <span class="c-str">"mode"</span>: <span class="c-str">"AUTO"</span>,
+    <span class="c-str">"timestamp"</span>: <span class="c-str">""</span>
+}
+
+<span class="c-cm"># ─── LOAD YOUR TRAINED AI MODELS ───────────────────────────────</span>
+<span class="c-kw">try</span>:
+    model_aqi_10  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_aqi_10sec.pkl"</span>)
+    model_aqi_30  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_aqi_30sec.pkl"</span>)
+    model_aqi_60  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_aqi_60sec.pkl"</span>)
+    model_co2_10  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_co2_10sec.pkl"</span>)
+    model_co2_30  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_co2_30sec.pkl"</span>)
+    model_co2_60  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_co2_60sec.pkl"</span>)
+    model_action  = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_action.pkl"</span>)
+    model_anomaly = joblib.<span class="c-fn">load</span>(<span class="c-str">"model_anomaly.pkl"</span>)
+    models_loaded = <span class="c-kw">True</span>
+    <span class="c-fn">print</span>(<span class="c-str">"✅ All AI models loaded"</span>)
+<span class="c-kw">except</span> Exception <span class="c-kw">as</span> e:
+    models_loaded = <span class="c-kw">False</span>
+    <span class="c-fn">print</span>(<span class="c-str">f"⚠️  Models not found: {e}"</span>)
+
+<span class="c-cm"># ─── ROUTE 1: ESP32 POSTS SENSOR DATA HERE ─────────────────────</span>
+@app.<span class="c-fn">route</span>(<span class="c-str">'/data'</span>, methods=[<span class="c-str">'POST'</span>])
+<span class="c-kw">def</span> <span class="c-fn">receive_data</span>():
+    <span class="c-kw">global</span> latest_data
+    data = request.<span class="c-fn">get_json</span>()
+    <span class="c-kw">if</span> data:
+        latest_data = data
+        latest_data[<span class="c-str">"timestamp"</span>] = datetime.<span class="c-fn">now</span>().<span class="c-fn">isoformat</span>()
+        <span class="c-fn">print</span>(<span class="c-str">f"📡 ESP32 data: AQI={data.get('aqi','?')} CO2={data.get('co2','?')}"</span>)
+    <span class="c-kw">return</span> <span class="c-fn">jsonify</span>({<span class="c-str">"status"</span>: <span class="c-str">"ok"</span>})
+
+<span class="c-cm"># ─── ROUTE 2: WEBSITE FETCHES LIVE DATA FROM HERE ──────────────</span>
+@app.<span class="c-fn">route</span>(<span class="c-str">'/live'</span>, methods=[<span class="c-str">'GET'</span>])
+<span class="c-kw">def</span> <span class="c-fn">get_live</span>():
+    <span class="c-kw">return</span> <span class="c-fn">jsonify</span>(latest_data)
+
+<span class="c-cm"># ─── ROUTE 3: AI PREDICTIONS ───────────────────────────────────</span>
+@app.<span class="c-fn">route</span>(<span class="c-str">'/predict'</span>, methods=[<span class="c-str">'GET'</span>])
+<span class="c-kw">def</span> <span class="c-fn">predict</span>():
+    d = latest_data
+    features = np.<span class="c-fn">array</span>([[
+        d[<span class="c-str">"aqi"</span>], d[<span class="c-str">"co2"</span>], d[<span class="c-str">"temp"</span>], d[<span class="c-str">"humidity"</span>],
+        d[<span class="c-str">"nh3"</span>], d[<span class="c-str">"benzene"</span>], d[<span class="c-str">"co"</span>]
+    ]])
+
+    <span class="c-kw">if not</span> models_loaded:
+        <span class="c-kw">return</span> <span class="c-fn">jsonify</span>({
+            <span class="c-str">"aqi_now"</span>: d[<span class="c-str">"aqi"</span>], <span class="c-str">"aqi_10sec"</span>: d[<span class="c-str">"aqi"</span>],
+            <span class="c-str">"aqi_30sec"</span>: d[<span class="c-str">"aqi"</span>], <span class="c-str">"aqi_60sec"</span>: d[<span class="c-str">"aqi"</span>],
+            <span class="c-str">"co2_now"</span>: d[<span class="c-str">"co2"</span>], <span class="c-str">"co2_10sec"</span>: d[<span class="c-str">"co2"</span>],
+            <span class="c-str">"co2_30sec"</span>: d[<span class="c-str">"co2"</span>], <span class="c-str">"co2_60sec"</span>: d[<span class="c-str">"co2"</span>],
+            <span class="c-str">"action"</span>: <span class="c-str">"KEEP_OFF"</span>, <span class="c-str">"anomaly"</span>: <span class="c-str">"NORMAL"</span>
+        })
+
+    <span class="c-kw">return</span> <span class="c-fn">jsonify</span>({
+        <span class="c-str">"aqi_now"</span>:    <span class="c-fn">float</span>(d[<span class="c-str">"aqi"</span>]),
+        <span class="c-str">"aqi_10sec"</span>:  <span class="c-fn">float</span>(model_aqi_10.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"aqi_30sec"</span>:  <span class="c-fn">float</span>(model_aqi_30.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"aqi_60sec"</span>:  <span class="c-fn">float</span>(model_aqi_60.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"co2_now"</span>:    <span class="c-fn">float</span>(d[<span class="c-str">"co2"</span>]),
+        <span class="c-str">"co2_10sec"</span>:  <span class="c-fn">float</span>(model_co2_10.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"co2_30sec"</span>:  <span class="c-fn">float</span>(model_co2_30.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"co2_60sec"</span>:  <span class="c-fn">float</span>(model_co2_60.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"action"</span>:     <span class="c-fn">str</span>(model_action.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>]),
+        <span class="c-str">"anomaly"</span>:    <span class="c-str">"ANOMALY"</span> <span class="c-kw">if</span> model_anomaly.<span class="c-fn">predict</span>(features)[<span class="c-num">0</span>] == <span class="c-num">1</span> <span class="c-kw">else</span> <span class="c-str">"NORMAL"</span>
+    })
+
+<span class="c-cm"># ─── START SERVER ──────────────────────────────────────────────</span>
+<span class="c-kw">if</span> __name__ == <span class="c-str">'__main__'</span>:
+    <span class="c-fn">print</span>(<span class="c-str">"🚀 AirMind server starting..."</span>)
+    <span class="c-fn">print</span>(<span class="c-str">"   ESP32 POST  → http://&lt;YOUR_IP&gt;:5001/data"</span>)
+    <span class="c-fn">print</span>(<span class="c-str">"   Website GET → http://&lt;YOUR_IP&gt;:5001/live"</span>)
+    <span class="c-fn">print</span>(<span class="c-str">"   AI GET      → http://&lt;YOUR_IP&gt;:5001/predict"</span>)
+    app.<span class="c-fn">run</span>(host=<span class="c-str">"0.0.0.0"</span>, port=<span class="c-num">5001</span>, debug=<span class="c-kw">True</span>)</pre>
+</div>
+
+<!-- STEP 3: UPDATE WEBSITE IP -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num s3">3</div>
+    <div>
+      <div class="section-title">Update the Dashboard with Your Laptop IP</div>
+      <div class="section-sub">ONE LINE CHANGE IN dashboard.html AND mobile_app.html</div>
+    </div>
+  </div>
+
+  <div class="tip"><strong>The dashboard already calls these URLs.</strong> Just change the IP from 127.0.0.1 to your laptop's IP if opening from another device (like your phone).</div>
+
+  <pre><span class="lang-tag">dashboard.html — JavaScript</span><span class="c-cm">// Find this section near the bottom of dashboard.html:</span>
+
+<span class="c-kw">async function</span> <span class="c-fn">fetchLive</span>() {
+  <span class="c-kw">try</span> {
+    <span class="c-cm">// ↓ CHANGE THIS IP if opening from mobile or another PC</span>
+    <span class="c-kw">const</span> r = <span class="c-kw">await</span> <span class="c-fn">fetch</span>(<span class="c-str">'http://127.0.0.1:5001/live'</span>);
+    <span class="c-cm">//               ↑ use 127.0.0.1 if opened on SAME laptop</span>
+    <span class="c-cm">//               ↑ use 192.168.1.5 if opened on phone/other PC</span>
+    <span class="c-kw">return await</span> r.<span class="c-fn">json</span>();
+  } <span class="c-kw">catch</span> { <span class="c-kw">return</span> <span class="c-fn">mockLive</span>(); }   <span class="c-cm">// falls back to demo data</span>
+}
+
+<span class="c-kw">async function</span> <span class="c-fn">fetchAI</span>() {
+  <span class="c-kw">try</span> {
+    <span class="c-kw">const</span> r = <span class="c-kw">await</span> <span class="c-fn">fetch</span>(<span class="c-str">'http://127.0.0.1:5001/predict'</span>);
+    <span class="c-kw">return await</span> r.<span class="c-fn">json</span>();
+  } <span class="c-kw">catch</span> { <span class="c-kw">return</span> <span class="c-fn">mockAI</span>(); }
+}</pre>
+</div>
+
+<!-- STEP 4: RUN ORDER -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num s4">4</div>
+    <div>
+      <div class="section-title">Demo Day — Start Order</div>
+      <div class="section-sub">RUN THESE IN ORDER</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Step</th><th>Command</th><th>What it does</th></tr>
+    <tr><td>1</td><td style="color:var(--accent2)">python live_server.py</td><td>Starts Flask on port 5001 — receives ESP32 data + serves AI</td></tr>
+    <tr><td>2</td><td style="color:var(--accent3)">Upload firmware to ESP32</td><td>ESP32 connects to Wi-Fi and starts POSTing every 2s</td></tr>
+    <tr><td>3</td><td style="color:var(--accent)">Open dashboard.html</td><td>Website polls /live and /predict every 3 seconds</td></tr>
+    <tr><td>4</td><td style="color:var(--accent4)">Open mobile_app.html on phone</td><td>Use http://YOUR_LAPTOP_IP:5001 URLs in the HTML</td></tr>
+  </table>
+
+  <div class="tip"><strong>Check it's working:</strong> Open your browser and go to <code style="color:var(--accent)">http://127.0.0.1:5001/live</code> — you should see JSON with your sensor values updating live.</div>
+
+  <div class="warn-box"><strong>⚠️ Windows Firewall:</strong> If the mobile app can't reach the laptop, run this in Admin CMD: <code style="color:var(--warn)">netsh advfirewall firewall add rule name="Flask" dir=in action=allow protocol=TCP localport=5001</code></div>
+</div>
+
+<!-- QUICK CHECKLIST -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num" style="background:rgba(0,229,255,0.1);color:var(--accent);border:1px solid var(--accent)">✓</div>
+    <div>
+      <div class="section-title">Pre-Demo Checklist</div>
+    </div>
+  </div>
+  <div class="check">ESP32 and laptop are on the same Wi-Fi network</div>
+  <div class="check">Laptop IP is correct in both ESP32 firmware and HTML files</div>
+  <div class="check">live_server.py is running — terminal shows incoming ESP32 data</div>
+  <div class="check">Browser console has no errors when opening dashboard.html</div>
+  <div class="check">Visit http://127.0.0.1:5001/live in browser — see live JSON</div>
+  <div class="check">Visit http://127.0.0.1:5001/predict in browser — see AI predictions</div>
+  <div class="check">model .pkl files are in the same folder as live_server.py</div>
+</div>
+
+</body>
+</html>
