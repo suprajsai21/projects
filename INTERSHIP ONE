@@ -1,0 +1,50 @@
+
+#include <Arduino.h>
+#include <DHT.h>
+
+#define DHT_PIN 4
+#define DHT_TYPE DHT22
+#define FAN_PIN 12
+#define ALARM_PIN 14
+
+const float TEMP_LIMIT = 40.0;
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(ALARM_PIN, OUTPUT);
+
+  digitalWrite(FAN_PIN, LOW);
+  digitalWrite(ALARM_PIN, LOW);
+
+  dht.begin();
+}
+
+void loop() {
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Sensor reading error");
+    digitalWrite(ALARM_PIN, HIGH);
+    delay(2000);
+    return;
+  }
+
+  bool overheating = temperature >= TEMP_LIMIT;
+
+  digitalWrite(FAN_PIN, overheating ? HIGH : LOW);
+  digitalWrite(ALARM_PIN, overheating ? HIGH : LOW);
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.print(" C | Humidity: ");
+  Serial.print(humidity);
+  Serial.print("% | Status: ");
+  Serial.println(overheating ? "WARNING" : "NORMAL");
+
+  delay(2000);
+}
